@@ -107,14 +107,7 @@
     })
     .on('complete', (file) => {
         fileP = file
-    })
-
-    // setInterval(() => {
-    //     i += .1
-    //
-    //     // .on('error', () => dispatch(reduxActions.createAction('LoadFileError')()))
-    // }, 10)
-    // renderer.render();
+    }).on('error', () => console.log("file load error!"))
 
 
     init()
@@ -151,15 +144,15 @@
     // animation loop
     var i = -1;
     function animate() {
-       // lfRenderer.handlePaint()
+        lfRenderer.handlePaint()
 
 
         requestAnimationFrame(animate)
         // gl.clearColor(1.0, 0.0, 0.0, 1.0);
         // Clear the color buffer with specified clear color
         // gl.clear(gl.COLOR_BUFFER_BIT);
-        i+=.1
-        lfRenderer.render(fileP, 1, 1, new LF.Vector2(i, 0))
+        i+= 2
+        lfRenderer.render(fileP, 1, 1, new LF.Vector2(i % 100, 0))
         texture.needsUpdate = true
         render()
     }
