@@ -220,7 +220,7 @@ class Renderer {
 	 */
 	handlePaint() {
 		if (!this.error) {
-			window.requestAnimationFrame(this.handlePaint);
+			//window.requestAnimationFrame(this.handlePaint);
 
 			if (this.props.file) {
 				if (this.needsRender) {

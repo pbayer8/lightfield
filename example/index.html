@@ -1,88 +1,177 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8" />
-	<title>Light field WebGL viewer</title>
-	<meta name="viewport" content="width=device-width" />
-	<link rel="stylesheet" href="../build/build.css" />
-	<style>
-		html, body {
-			background-color: #25272d;
-			margin: 0;
-			padding: 0;
-		}
+    <meta charset="utf-8"/>
+    <title>
+        Light field WebGL viewer
+    </title>
+    <meta content="width=device-width" name="viewport"/>
+    <link href="../build/build.css" rel="stylesheet"/>
+    <style>
+        html, body {
+            background-color: #25272d;
+            margin: 0;
+            padding: 0;
+        }
 
-		#container {
-			font-family: 'Segoe UI', sans-serif;
-			margin: 32px auto;
-		}
+        #container {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 32px auto;
+        }
 
-		#viewer {
-			box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
-		}
+        #viewer {
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+        }
 
-		#controls {
-			color: #eee;
-			font-size: 14px;
-			margin: 24px 0;
-		}
+        #controls {
+            color: #eee;
+            font-size: 14px;
+            margin: 24px 0;
+        }
 
-		.button {
-			background-color: #45474d;
-			border-radius: 4px;
-			color: #ddd;
-			cursor: pointer;
-			display: inline-block;
-			line-height: 20px;
-			padding: 8px 20px;
-			margin: 0 8px;
-		}
+        .button {
+            background-color: #45474d;
+            border-radius: 4px;
+            color: #ddd;
+            cursor: pointer;
+            display: inline-block;
+            line-height: 20px;
+            padding: 8px 20px;
+            margin: 0 8px;
+        }
 
-		.button:hover {
-			background-color: #0ab783;
-			color: #000;
-		}
+        .button:hover {
+            background-color: #0ab783;
+            color: #000;
+        }
 
-		.link {
-			color: inherit;
-			line-height: 36px;
-			float: right;
-			margin: 0 16px;
-		}
-	</style>
-	<script src="../build/build.js"></script>
-	<script>
-		document.addEventListener('DOMContentLoaded', function() {
-			function resizeViewer() {
-				var width = Math.max(Math.min(848, window.innerWidth), 320);
-				var height = Math.min(560, width / (848 / 560));
+        .link {
+            color: inherit;
+            line-height: 36px;
+            float: right;
+            margin: 0 16px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r79/three.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js">
+    </script>
+    <script src="http://rawgithub.com/dataarts/dat.gui/master/build/dat.gui.min.js">
+    </script>
+    <script src="http://threejs.org/examples/js/controls/TrackballControls.js">
+    </script>
+    <script src="../build/build.js">
+    </script>
+    <script>
+        //    document.addEventListener('DOMContentLoaded', function() {
+        // 	function resizeViewer() {
+        // 		var width = Math.max(Math.min(848, window.innerWidth), 320);
+        // 		var height = Math.min(560, width / (848 / 560));
+        //
+        // 		instance.setSize(width, height);
+        // 		document.getElementById('container').style.width = width + 'px';
+        // 	}
+        //
+        // 	var instance = new LFViewer(document.getElementById('viewer'));
+        // 	resizeViewer();
+        //
+        // 	window.addEventListener('resize', resizeViewer);
+        //
+        // 	instance.load('field-cards');
+        //
+        // 	document.querySelector('#file-cards').addEventListener('click', function() { instance.load('field-cards') });
+        // 	document.querySelector('#file-chess').addEventListener('click', function() { instance.load('field-chess') });
+        // });
 
-				instance.setSize(width, height);
-				document.getElementById('container').style.width = width + 'px';
-			}
 
-			var instance = new LFViewer(document.getElementById('viewer'));
-			resizeViewer();
-
-			window.addEventListener('resize', resizeViewer);
-
-			instance.load('field-cards');
-
-			document.querySelector('#file-cards').addEventListener('click', function() { instance.load('field-cards') });
-			document.querySelector('#file-chess').addEventListener('click', function() { instance.load('field-chess') });
-		});
-	</script>
+    </script>
 </head>
 <body>
-	<div id="container" style="width: 848px;">
-		<div id="viewer"></div>
-		<div id="controls">
-			<div class="button" id="file-cards">Light field 1</div>
-			<div class="button" id="file-chess">Light field 2</div>
+<canvas id="test" width="512" height="512" style="display:none"></canvas>
+<div id="threecontainer">
+</div>
+<script type="text/javascript">
+    var stats, scene, renderer, composer
+    var camera, cameraControls, material, texture
+    const canvas = document.getElementById('test')
+    // var ctx = canvas.getContext('2d');
 
-			<a class="link" href="https://github.com/mpk/lightfield" target="blank">Source on GitHub</a>
-			<a class="link" href="http://lightfield.stanford.edu/" target="blank">Light fields from Stanford University</a>
-		</div>
-	</div>
+
+    var gl = canvas.getContext('webgl')
+    var lfRenderer = LF.Renderer.init(canvas)
+    var i = 0
+    var fileP
+
+    LF.Loader.get('field-chess')
+    .on('progress', (value) => {
+    })
+    .on('complete', (file) => {
+        fileP = file
+    })
+
+    // setInterval(() => {
+    //     i += .1
+    //
+    //     // .on('error', () => dispatch(reduxActions.createAction('LoadFileError')()))
+    // }, 10)
+    // renderer.render();
+
+
+    init()
+    animate()
+
+    function init() {
+        renderer = new THREE.WebGLRenderer({
+            antialias: true    // to get smoother output
+        })
+        renderer.setClearColor(0xbbbbbb)
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        document.getElementById('threecontainer').appendChild(renderer.domElement)
+        // add Stats.js - https://github.com/mrdoob/stats.js
+
+        // create a scene
+        scene = new THREE.Scene()
+        // put a camera in the scene
+        camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000)
+        camera.position.set(0, 0, 5)
+        scene.add(camera)
+        // create a camera contol
+        cameraControls = new THREE.TrackballControls(camera, renderer.domElement)
+        // Objects
+
+        texture = new THREE.Texture(canvas)
+        texture.needsUpdate = true
+        material = new THREE.MeshBasicMaterial({
+            map: texture
+        })
+        var mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2, 10, 10), material)
+        scene.add(mesh)
+    }
+
+    // animation loop
+    var i = -1;
+    function animate() {
+       // lfRenderer.handlePaint()
+
+
+        requestAnimationFrame(animate)
+        // gl.clearColor(1.0, 0.0, 0.0, 1.0);
+        // Clear the color buffer with specified clear color
+        // gl.clear(gl.COLOR_BUFFER_BIT);
+        i+=.1
+        lfRenderer.render(fileP, 1, 1, new LF.Vector2(i, 0))
+        texture.needsUpdate = true
+        render()
+    }
+
+    // render the scene
+    function render() {
+        // variable which is increase by Math.PI every seconds - usefull for animation
+        cameraControls.update()
+
+        // actually render the scene
+        renderer.render(scene, camera)
+    }
+</script>
 </body>
 </html>
