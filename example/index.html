@@ -38,6 +38,8 @@
     var stats, scene, renderer
     var camera
 
+    var lightField;
+
     var lfPlaneLeft, lfPlaneRight
     var lfTextureLeft, lfTexureRight
     var lfMaterialLeft, lfMaterialRight
@@ -57,7 +59,7 @@
 
     var loadedLightfield;
 
-    LF.Loader.get('calibrate_blue')
+    LF.Loader.get('blackhole/dragon_quest_33x33')
         .on('progress', (value) => {
             //console.log('loading file: ' + value)
         })
@@ -108,20 +110,13 @@
         //cameraControls = new THREE.TrackballControls(camera, renderer.domElement)
         // Objects
 
+
         lfTextureLeft = new THREE.Texture(canvasLeft)
         lfTextureLeft.needsUpdate = true
-
         lfMaterialLeft = new THREE.MeshBasicMaterial({
             map: lfTextureLeft
         })
-
-        lfPlaneLeft = new THREE.Mesh(new THREE.PlaneGeometry(1.25,1.25,1,1), lfMaterialLeft)
-
-        lfPlaneLeft.position.set(-.5,1.6,-2);
-
-        scene.add(lfPlaneLeft)
-
-
+        lfPlaneLeft = new THREE.Mesh(new THREE.PlaneGeometry(1,1,1,1), lfMaterialLeft)
 
         lfTextureRight = new THREE.Texture(canvasRight)
         lfTextureRight.needsUpdate = true
@@ -129,12 +124,16 @@
         lfMaterialRight = new THREE.MeshBasicMaterial({
             map: lfTextureRight
         })
+        lfPlaneRight = new THREE.Mesh(new THREE.PlaneGeometry(1,1,1,1), lfMaterialRight)
 
-        lfPlaneRight = new THREE.Mesh(new THREE.PlaneGeometry(1.25,1.25,1,1), lfMaterialRight)
 
-        lfPlaneRight.position.set(.5,1.6,-2);
+        lightField = new THREE.Group()
+        lightField.add(lfPlaneLeft)
+        lightField.add(lfPlaneRight)
+        scene.add(lightField)
 
-        scene.add(lfPlaneRight)
+        lightField.position.set(0,1.6,-2);
+
 
 
         var cubeGeometry = new THREE.BoxGeometry( .2,.2,.2);
@@ -145,7 +144,35 @@
 
 
         var tick;
+
+
+        window.addEventListener('vrdisplaypresentchange', function(event) {
+            console.log(event)
+            if(event.display.isPresenting) {
+
+                let vrCams = renderer.vr.getCamera(camera).cameras;
+                console.log(vrCams)
+
+                lfPlaneLeft.layers.set(1)
+                lfPlaneRight.layers.set(2)
+                
+                //put left on layer 1
+                //put right on layer 2
+
+                //console.log('Display has started presenting.')
+            } else {
+                console.log('Display has stopped presenting.')
+             }
+});
+
+      
+        
+        // setTimeout(function() {
+ 
+        // }, 4000)
+
         renderer.setAnimationLoop(function() {
+
 
             this.cube.rotation.x +=.002
             this.cube.rotation.y +=.001
@@ -158,14 +185,17 @@
             //mesh.lookAt( camera.position );
             
 
-            xPosLeft = Math.min(Math.max(parseInt(camera.position.x *3), -1), 1)
-            xPosRight = -(Math.min(Math.max(parseInt(camera.position.x *3), -1), 1))
+            // xPosLeft = Math.min(Math.max(parseInt(camera.position.x *3), -1), 1)
+            // xPosRight = -(Math.min(Math.max(parseInt(camera.position.x *3), -1), 1))
+
+            xPosLeft = Math.min(Math.max(parseInt(camera.position.x *33), -16), 16)
+            xPosRight = Math.min(Math.max(parseInt(camera.position.x * 33+ 5), -16), 16)
 
 
             //needs a file, aperture, focus, viewpoint
-            lfRendererLeft.render(loadedLightfield, 1, 1, new LF.Vector2(xPosLeft, yPosLeft))
+            lfRendererLeft.render(loadedLightfield, 0, 1, new LF.Vector2(xPosLeft, yPosLeft))
 
-            lfRendererRight.render(loadedLightfield, 1, 1, new LF.Vector2(xPosRight, yPosRight))
+            lfRendererRight.render(loadedLightfield, 0, 1, new LF.Vector2(xPosRight, yPosRight))
 
             lfTextureLeft.needsUpdate = true
             lfTextureRight.needsUpdate = true
