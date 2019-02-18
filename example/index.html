@@ -2,12 +2,12 @@
 <html>
 
 <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8" />
     <title>
         Lightfield to Three.js Demo
     </title>
-    <meta content="width=device-width" name="viewport"/>
-    <link href="../build/build.css" rel="stylesheet"/>
+    <meta content="width=device-width" name="viewport" />
+    <link href="../build/build.css" rel="stylesheet" />
     <style>
         html, body {
             margin: 0;
@@ -23,69 +23,65 @@
     </script>
     <script src="http://threejs.org/examples/js/vr/WebVR.js">
     </script>
-    <!--<script src="https://raw.githubusercontent.com/danrossi/three-vr-orbitcontrols/master/src/OrbitControls.js">-->
-    <script src="http://threejs.org/examples/js/controls/OrbitControls.js">
-    </script>
     <script src="../build/build.js">
     </script>
-    <script>
-        //    document.addEventListener('DOMContentLoaded', function() {
-        //  function resizeViewer() {
-        //      var width = Math.max(Math.min(848, window.innerWidth), 320);
-        //      var height = Math.min(560, width / (848 / 560));
-        //
-        //      instance.setSize(width, height);
-        //      document.getElementById('container').style.width = width + 'px';
-        //  }
-        //
-        //  var instance = new LFViewer(document.getElementById('viewer'));
-        //  resizeViewer();
-        //
-        //  window.addEventListener('resize', resizeViewer);
-        //
-        //  instance.load('field-cards');
-        //
-        //  document.querySelector('#file-cards').addEventListener('click', function() { instance.load('field-cards') });
-        //  document.querySelector('#file-chess').addEventListener('click', function() { instance.load('field-chess') });
-        // });
-    </script>
+
 </head>
 
 <body>
-<canvas id="lfRenderCanvas" width="512" height="512" style="display:none"></canvas>
-<div id="threeContainer">
-</div>
-<script type="text/javascript">
 
-    var stats, scene, renderer, composer
-    var camera, cameraControls, mesh, material, texture
-    const canvas = document.getElementById('lfRenderCanvas')
-    // var ctx = canvas.getContext('2d');
+    <div id="threeContainer">
+    </div>
 
+    <script type="text/javascript">
 
-    var gl = canvas.getContext('webgl')
-    var lfRenderer = LF.Renderer.init(canvas)
+    var stats, scene, renderer
+    var camera
 
-    var xPos = 0
-    var yPos = 0
-    var tick = 0
-    var loadedLightfield
+    var lfPlaneLeft, lfPlaneRight
+    var lfTextureLeft, lfTexureRight
+    var lfMaterialLeft, lfMaterialRight
 
+    var canvasLeft;
+    var canvasRight;
+    
+    var lfRendererLeft;
+    var lfRendererRight;
 
-    LF.Loader.get('calibrate')
-    // LF.Loader.get('field-crystal')
-    .on('progress', (value) => {
-    })
-    .on('complete', (file) => {
-        console.log(file)
-                console.log(lfRenderer)
+    var xPosLeft = 0;
+    var yPosLeft = 0;
 
-        loadedLightfield = file
-        console.log('loaded')
-    }).on('error', () => console.log('file load error!'))
+    var xPosRight = 0;
+    var yPosRight = 0;
 
 
-    init()
+    var loadedLightfield;
+
+    LF.Loader.get('calibrate_blue')
+        .on('progress', (value) => {
+            //console.log('loading file: ' + value)
+        })
+        .on('complete', (file) => {
+            loadedLightfield = file
+
+            canvasLeft = document.createElement('canvas');
+            canvasLeft.width = nearestPowerOf2(file.frameSize.width);
+            canvasLeft.height = nearestPowerOf2(file.frameSize.height);
+            canvasLeft.style.display = "none";
+            lfRendererLeft = LF.Renderer.init(canvasLeft)
+
+            canvasRight = document.createElement('canvas');
+            canvasRight.width = nearestPowerOf2(file.frameSize.width);
+            canvasRight.height = nearestPowerOf2(file.frameSize.height);
+            canvasRight.style.display = "none";
+            lfRendererRight = LF.Renderer.init(canvasRight)
+
+
+            init()
+
+        }).on('error', () => console.log("file load error!"))
+
+
 
     function init() {
 
@@ -93,82 +89,105 @@
             antialias: true // to get smoother output
         })
 
-        document.body.appendChild(WEBVR.createButton(renderer))
-        renderer.vr.enabled = true
+        document.body.appendChild(WEBVR.createButton(renderer));
+        renderer.vr.enabled = true;
 
-        renderer.setClearColor(0X030303)
+        renderer.setClearColor(0X070707)
         renderer.setSize(window.innerWidth, window.innerHeight)
+
         document.getElementById('threeContainer').appendChild(renderer.domElement)
         // add Stats.js - https://github.com/mrdoob/stats.js
 
         scene = new THREE.Scene()
         camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000)
         camera.position.set(0, 0, 0)
-
-
+        
         scene.add(camera)
 
         // create a camera contol
-        // cameraControls = new THREE.TrackballControls(camera, renderer.domElement)
-        // cameraControls = new THREE.OrbitControls( camera );
+        //cameraControls = new THREE.TrackballControls(camera, renderer.domElement)
         // Objects
 
-        texture = new THREE.Texture(canvas)
-        texture.needsUpdate = true
+        lfTextureLeft = new THREE.Texture(canvasLeft)
+        lfTextureLeft.needsUpdate = true
 
-        material = new THREE.MeshBasicMaterial({
-            map: texture
+        lfMaterialLeft = new THREE.MeshBasicMaterial({
+            map: lfTextureLeft
         })
 
-        mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 1.25, 1, 1), material)
+        lfPlaneLeft = new THREE.Mesh(new THREE.PlaneGeometry(1.25,1.25,1,1), lfMaterialLeft)
 
-        //camera.add(mesh);
-        //mesh.position.set(0,0,-1.2);
+        lfPlaneLeft.position.set(-.5,1.6,-2);
 
-        mesh.position.set(0, 1.6, -2)
-        scene.add(mesh)
+        scene.add(lfPlaneLeft)
 
 
-        var geometry = new THREE.BoxGeometry(.2, .2, .2)
-        var material = new THREE.MeshBasicMaterial({color: 0x00ff00})
-        this.cube = new THREE.Mesh(geometry, material)
-        this.cube.position.set(-.5, 1.2, -1)
-        scene.add(this.cube)
 
-        var light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1)
-        scene.add(light)
+        lfTextureRight = new THREE.Texture(canvasRight)
+        lfTextureRight.needsUpdate = true
+
+        lfMaterialRight = new THREE.MeshBasicMaterial({
+            map: lfTextureRight
+        })
+
+        lfPlaneRight = new THREE.Mesh(new THREE.PlaneGeometry(1.25,1.25,1,1), lfMaterialRight)
+
+        lfPlaneRight.position.set(.5,1.6,-2);
+
+        scene.add(lfPlaneRight)
+
+
+        var cubeGeometry = new THREE.BoxGeometry( .2,.2,.2);
+        var cubeMaterial = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+        this.cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
+        this.cube.position.set(-.5,1.2,-1);
+        scene.add( this.cube );
+
+
+        var tick;
+        renderer.setAnimationLoop(function() {
+
+            this.cube.rotation.x +=.002
+            this.cube.rotation.y +=.001
+
+            tick += 1;
+            //mesh.position.x += Math.sin(tick * .00005) * .1
+
+            lfRendererLeft.handlePaint()
+            lfRendererRight.handlePaint()
+            //mesh.lookAt( camera.position );
+            
+
+            xPosLeft = Math.min(Math.max(parseInt(camera.position.x *3), -1), 1)
+            xPosRight = -(Math.min(Math.max(parseInt(camera.position.x *3), -1), 1))
+
+
+            //needs a file, aperture, focus, viewpoint
+            lfRendererLeft.render(loadedLightfield, 1, 1, new LF.Vector2(xPosLeft, yPosLeft))
+
+            lfRendererRight.render(loadedLightfield, 1, 1, new LF.Vector2(xPosRight, yPosRight))
+
+            lfTextureLeft.needsUpdate = true
+            lfTextureRight.needsUpdate = true
+
+            // variable which is increase by Math.PI every seconds - usefull for animation
+            //cameraControls.update()
+
+            // actually render the scene
+            renderer.render(scene, camera)
+
+        });
 
 
     }
 
-
-    renderer.setAnimationLoop(function () {
-
-            this.cube.rotation.x += .002
-            this.cube.rotation.y += .001
-            lfRenderer.handlePaint()
-//        mesh.lookAt( camera.position );
-            //;
-            // xPos = camera.position.x * 30
-            // yPos = -(camera.position.y) * 30
-
-            tick += 1
-            mesh.position.x += Math.sin(tick * .00005) * .1
-
-            //needs a file, aperture, focus, viewpoint
-            lfRenderer.render(loadedLightfield, 1, 1, new LF.Vector2(xPos , yPos ))
-            texture.needsUpdate = true
-
-            // variable which is increase by Math.PI every seconds - usefull for animation
-            // cameraControls.update()
-
-            // actually render the scene
-            renderer.render(scene, camera)
-        }
-    )
+    function nearestPowerOf2(n) {
+        return 1 << 31 - Math.clz32(n);
+    }
 
 
-</script>
+
+    </script>
 </body>
 
 </html>
