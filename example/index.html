@@ -1,170 +1,172 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8"/>
     <title>
-        Light field WebGL viewer
+        Lightfield to Three.js Demo
     </title>
     <meta content="width=device-width" name="viewport"/>
     <link href="../build/build.css" rel="stylesheet"/>
     <style>
         html, body {
-            background-color: #25272d;
             margin: 0;
             padding: 0;
         }
 
-        #container {
-            font-family: 'Segoe UI', sans-serif;
-            margin: 32px auto;
-        }
-
-        #viewer {
-            box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
-        }
-
-        #controls {
-            color: #eee;
-            font-size: 14px;
-            margin: 24px 0;
-        }
-
-        .button {
-            background-color: #45474d;
-            border-radius: 4px;
-            color: #ddd;
-            cursor: pointer;
-            display: inline-block;
-            line-height: 20px;
-            padding: 8px 20px;
-            margin: 0 8px;
-        }
-
-        .button:hover {
-            background-color: #0ab783;
-            color: #000;
-        }
-
-        .link {
-            color: inherit;
-            line-height: 36px;
-            float: right;
-            margin: 0 16px;
-        }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r79/three.min.js">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/101/three.min.js">
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js">
     </script>
-    <script src="http://rawgithub.com/dataarts/dat.gui/master/build/dat.gui.min.js">
-    </script>
     <script src="http://threejs.org/examples/js/controls/TrackballControls.js">
+    </script>
+    <script src="http://threejs.org/examples/js/vr/WebVR.js">
     </script>
     <script src="../build/build.js">
     </script>
     <script>
         //    document.addEventListener('DOMContentLoaded', function() {
-        // 	function resizeViewer() {
-        // 		var width = Math.max(Math.min(848, window.innerWidth), 320);
-        // 		var height = Math.min(560, width / (848 / 560));
+        //  function resizeViewer() {
+        //      var width = Math.max(Math.min(848, window.innerWidth), 320);
+        //      var height = Math.min(560, width / (848 / 560));
         //
-        // 		instance.setSize(width, height);
-        // 		document.getElementById('container').style.width = width + 'px';
-        // 	}
+        //      instance.setSize(width, height);
+        //      document.getElementById('container').style.width = width + 'px';
+        //  }
         //
-        // 	var instance = new LFViewer(document.getElementById('viewer'));
-        // 	resizeViewer();
+        //  var instance = new LFViewer(document.getElementById('viewer'));
+        //  resizeViewer();
         //
-        // 	window.addEventListener('resize', resizeViewer);
+        //  window.addEventListener('resize', resizeViewer);
         //
-        // 	instance.load('field-cards');
+        //  instance.load('field-cards');
         //
-        // 	document.querySelector('#file-cards').addEventListener('click', function() { instance.load('field-cards') });
-        // 	document.querySelector('#file-chess').addEventListener('click', function() { instance.load('field-chess') });
+        //  document.querySelector('#file-cards').addEventListener('click', function() { instance.load('field-cards') });
+        //  document.querySelector('#file-chess').addEventListener('click', function() { instance.load('field-chess') });
         // });
-
-
     </script>
 </head>
+
 <body>
-<canvas id="test" width="512" height="512" style="display:none"></canvas>
-<div id="threecontainer">
+<canvas id="lfRenderCanvas" width="1024" height="1024" style="display:none"></canvas>
+<div id="threeContainer">
 </div>
 <script type="text/javascript">
+
     var stats, scene, renderer, composer
-    var camera, cameraControls, material, texture
-    const canvas = document.getElementById('test')
+    var camera, cameraControls, mesh, material, texture
+    const canvas = document.getElementById('lfRenderCanvas')
     // var ctx = canvas.getContext('2d');
 
 
     var gl = canvas.getContext('webgl')
     var lfRenderer = LF.Renderer.init(canvas)
-    var i = 0
-    var fileP
+
+    var xPos = 0
+    var yPos = 0
+
+    var loadedLightfield
+
+
+    LF.Loader.get('33x13')
+    .on('progress', (value) => {
+        //console.log('loading file: ' + value)
+    })
+    .on('complete', (file) => {
+        console.log(file)
+    })
 
     LF.Loader.get('field-crystal')
     .on('progress', (value) => {
     })
     .on('complete', (file) => {
         fileP = file
-    }).on('error', () => console.log("file load error!"))
+    }).on('error', () => console.log('file load error!'))
 
 
     init()
-    animate()
 
     function init() {
+
         renderer = new THREE.WebGLRenderer({
-            antialias: true    // to get smoother output
+            antialias: true // to get smoother output
         })
-        renderer.setClearColor(0xbbbbbb)
+
+        document.body.appendChild(WEBVR.createButton(renderer))
+        renderer.vr.enabled = true
+
+        renderer.setClearColor(0X030303)
         renderer.setSize(window.innerWidth, window.innerHeight)
-        document.getElementById('threecontainer').appendChild(renderer.domElement)
+        document.getElementById('threeContainer').appendChild(renderer.domElement)
         // add Stats.js - https://github.com/mrdoob/stats.js
 
-        // create a scene
         scene = new THREE.Scene()
-        // put a camera in the scene
         camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000)
-        camera.position.set(0, 0, 5)
+        camera.position.set(0, 0, 0)
+
+
         scene.add(camera)
+
         // create a camera contol
         cameraControls = new THREE.TrackballControls(camera, renderer.domElement)
         // Objects
 
         texture = new THREE.Texture(canvas)
         texture.needsUpdate = true
+
         material = new THREE.MeshBasicMaterial({
             map: texture
         })
-        var mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2, 10, 10), material)
+
+        mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 1.25, 1, 1), material)
+
+        //camera.add(mesh);
+        //mesh.position.set(0,0,-1.2);
+
+        mesh.position.set(0, 1.6, -2)
         scene.add(mesh)
+
+
+        var geometry = new THREE.BoxGeometry(.2, .2, .2)
+        var material = new THREE.MeshBasicMaterial({color: 0x00ff00})
+        this.cube = new THREE.Mesh(geometry, material)
+        this.cube.position.set(-.5, 1.2, -1)
+        scene.add(this.cube)
+
+        var light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1)
+        scene.add(light)
+
+
     }
 
-    // animation loop
-    var i = -1;
-    function animate() {
-        lfRenderer.handlePaint()
+
+    renderer.setAnimationLoop(function () {
+
+            this.cube.rotation.x += .002
+            this.cube.rotation.y += .001
+
+            lfRenderer.handlePaint()
+//        mesh.lookAt( camera.position );
+            //;
+            xPos = camera.position.x * 30
+            yPos = -(camera.position.y) * 30
 
 
-        requestAnimationFrame(animate)
-        // gl.clearColor(1.0, 0.0, 0.0, 1.0);
-        // Clear the color buffer with specified clear color
-        // gl.clear(gl.COLOR_BUFFER_BIT);
-        i+= 2
-        lfRenderer.render(fileP, 1, 1, new LF.Vector2(i % 100, 0))
-        texture.needsUpdate = true
-        render()
-    }
+            //needs a file, aperture, focus, viewpoint
+            lfRenderer.render(loadedLightfield, 1, 1, new LF.Vector2(xPos % 10, yPos % 7))
+            texture.needsUpdate = true
 
-    // render the scene
-    function render() {
-        // variable which is increase by Math.PI every seconds - usefull for animation
-        cameraControls.update()
+            // variable which is increase by Math.PI every seconds - usefull for animation
+            cameraControls.update()
 
-        // actually render the scene
-        renderer.render(scene, camera)
-    }
+            // actually render the scene
+            renderer.render(scene, camera)
+        }
+    )
+
+
 </script>
 </body>
+
 </html>
