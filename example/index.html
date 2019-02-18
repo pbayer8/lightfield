@@ -59,7 +59,12 @@
 
     var loadedLightfield;
 
-    LF.Loader.get('blackhole/dragon_quest_33x33')
+
+    var apertureLeft = 0;
+    var apertureRight = 0;
+
+    var aspectRatio = 0;
+    LF.Loader.get('field-cards')
         .on('progress', (value) => {
             //console.log('loading file: ' + value)
         })
@@ -67,17 +72,22 @@
             loadedLightfield = file
 
             canvasLeft = document.createElement('canvas');
-            canvasLeft.width = nearestPowerOf2(file.frameSize.width);
-            canvasLeft.height = nearestPowerOf2(file.frameSize.height);
+            // canvasLeft.width = nearestPowerOf2(file.frameSize.width);
+            // canvasLeft.height = nearestPowerOf2(file.frameSize.height);
+            canvasLeft.width = file.frameSize.width;
+            canvasLeft.height = file.frameSize.height;
             canvasLeft.style.display = "none";
             lfRendererLeft = LF.Renderer.init(canvasLeft)
 
             canvasRight = document.createElement('canvas');
-            canvasRight.width = nearestPowerOf2(file.frameSize.width);
-            canvasRight.height = nearestPowerOf2(file.frameSize.height);
+            // canvasRight.width = nearestPowerOf2(file.frameSize.width);
+            // canvasRight.height = nearestPowerOf2(file.frameSize.height);
+            canvasRight.width = file.frameSize.width;
+            canvasRight.height = file.frameSize.height;
             canvasRight.style.display = "none";
             lfRendererRight = LF.Renderer.init(canvasRight)
 
+            aspectRatio = file.frameSize.width / file.frameSize.height
 
             init()
 
@@ -116,7 +126,11 @@
         lfMaterialLeft = new THREE.MeshBasicMaterial({
             map: lfTextureLeft
         })
-        lfPlaneLeft = new THREE.Mesh(new THREE.PlaneGeometry(1,1,1,1), lfMaterialLeft)
+
+
+
+            
+        lfPlaneLeft = new THREE.Mesh(new THREE.PlaneGeometry(aspectRatio,1,1,1), lfMaterialLeft)
 
         lfTextureRight = new THREE.Texture(canvasRight)
         lfTextureRight.needsUpdate = true
@@ -124,7 +138,7 @@
         lfMaterialRight = new THREE.MeshBasicMaterial({
             map: lfTextureRight
         })
-        lfPlaneRight = new THREE.Mesh(new THREE.PlaneGeometry(1,1,1,1), lfMaterialRight)
+        lfPlaneRight = new THREE.Mesh(new THREE.PlaneGeometry(aspectRatio,1,1,1), lfMaterialRight)
 
 
         lightField = new THREE.Group()
@@ -188,14 +202,32 @@
             // xPosLeft = Math.min(Math.max(parseInt(camera.position.x *3), -1), 1)
             // xPosRight = -(Math.min(Math.max(parseInt(camera.position.x *3), -1), 1))
 
-            xPosLeft = Math.min(Math.max(parseInt(camera.position.x *33), -16), 16)
-            xPosRight = Math.min(Math.max(parseInt(camera.position.x * 33+ 5), -16), 16)
 
+            /* dragon numbers
+            xPosLeft = Math.min(Math.max(camera.position.x *33, -16), 16)
+            xPosRight = Math.min(Math.max(camera.position.x * 33+ 5, -16), 16)
+
+            yPosLeft = Math.min(Math.max((camera.position.y -1.4) * -33, -16), 16)
+            yPosRight = Math.min(Math.max((camera.position.y -1.4) * -33, -16), 16)
+            */
+
+
+//var 
+            var xMult
+            var yMult
+
+            //loadedLightfield.mat
+
+            xPosLeft = Math.min(Math.max(camera.position.x *33, -8), 8)
+            xPosRight = Math.min(Math.max(camera.position.x * 33+ 5, -8), 8)
+
+            yPosLeft = Math.min(Math.max((camera.position.y -1.4) * -33, -8), 8)
+            yPosRight = Math.min(Math.max((camera.position.y -1.4) * -33, -8), 8)
 
             //needs a file, aperture, focus, viewpoint
-            lfRendererLeft.render(loadedLightfield, 0, 1, new LF.Vector2(xPosLeft, yPosLeft))
+            lfRendererLeft.render(loadedLightfield, apertureLeft, 1, new LF.Vector2(xPosLeft, yPosLeft))
 
-            lfRendererRight.render(loadedLightfield, 0, 1, new LF.Vector2(xPosRight, yPosRight))
+            lfRendererRight.render(loadedLightfield, apertureRight, 1, new LF.Vector2(xPosRight, yPosRight))
 
             lfTextureLeft.needsUpdate = true
             lfTextureRight.needsUpdate = true
