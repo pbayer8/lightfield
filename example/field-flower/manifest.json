@@ -1,0 +1,15 @@
+{
+	"version": 1,
+	"frame": {
+		"width": 1280,
+		"height": 1536
+	},
+	"matrix": {
+		"width": 17,
+		"height": 17
+	},
+	"focus": {
+		"min": -2.8,
+		"max": 1.8
+	}
+}

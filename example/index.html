@@ -52,7 +52,7 @@
 </head>
 
 <body>
-<canvas id="lfRenderCanvas" width="1024" height="1024" style="display:none"></canvas>
+<canvas id="lfRenderCanvas" width="512" height="512" style="display:none"></canvas>
 <div id="threeContainer">
 </div>
 <script type="text/javascript">
@@ -71,7 +71,9 @@
     var tick = 0
     var loadedLightfield
 
-    LF.Loader.get('field-crystal')
+
+    LF.Loader.get('calibrate')
+    // LF.Loader.get('field-crystal')
     .on('progress', (value) => {
     })
     .on('complete', (file) => {
@@ -144,7 +146,6 @@
 
             this.cube.rotation.x += .002
             this.cube.rotation.y += .001
-
             lfRenderer.handlePaint()
 //        mesh.lookAt( camera.position );
             //;
