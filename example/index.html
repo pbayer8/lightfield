@@ -23,6 +23,9 @@
     </script>
     <script src="http://threejs.org/examples/js/vr/WebVR.js">
     </script>
+    <!--<script src="https://raw.githubusercontent.com/danrossi/three-vr-orbitcontrols/master/src/OrbitControls.js">-->
+    <script src="http://threejs.org/examples/js/controls/OrbitControls.js">
+    </script>
     <script src="../build/build.js">
     </script>
     <script>
@@ -65,23 +68,15 @@
 
     var xPos = 0
     var yPos = 0
-
+    var tick = 0
     var loadedLightfield
 
-
-    LF.Loader.get('33x13')
-    .on('progress', (value) => {
-        //console.log('loading file: ' + value)
-    })
-    .on('complete', (file) => {
-        console.log(file)
-    })
-
-    LF.Loader.get('field-crystal')
+    LF.Loader.get('field-chess')
     .on('progress', (value) => {
     })
     .on('complete', (file) => {
-        fileP = file
+        loadedLightfield = file
+        console.log('loaded')
     }).on('error', () => console.log('file load error!'))
 
 
@@ -109,7 +104,8 @@
         scene.add(camera)
 
         // create a camera contol
-        cameraControls = new THREE.TrackballControls(camera, renderer.domElement)
+        // cameraControls = new THREE.TrackballControls(camera, renderer.domElement)
+        // cameraControls = new THREE.OrbitControls( camera );
         // Objects
 
         texture = new THREE.Texture(canvas)
@@ -145,20 +141,20 @@
 
             this.cube.rotation.x += .002
             this.cube.rotation.y += .001
-
+            tick += .05
             lfRenderer.handlePaint()
 //        mesh.lookAt( camera.position );
             //;
             xPos = camera.position.x * 30
             yPos = -(camera.position.y) * 30
-
+            mesh.position.x += .01*Math.sin(tick)
 
             //needs a file, aperture, focus, viewpoint
             lfRenderer.render(loadedLightfield, 1, 1, new LF.Vector2(xPos % 10, yPos % 7))
             texture.needsUpdate = true
 
             // variable which is increase by Math.PI every seconds - usefull for animation
-            cameraControls.update()
+            // cameraControls.update()
 
             // actually render the scene
             renderer.render(scene, camera)
