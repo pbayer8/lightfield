@@ -71,10 +71,13 @@
     var tick = 0
     var loadedLightfield
 
-    LF.Loader.get('field-chess')
+    LF.Loader.get('field-crystal')
     .on('progress', (value) => {
     })
     .on('complete', (file) => {
+        console.log(file)
+                console.log(lfRenderer)
+
         loadedLightfield = file
         console.log('loaded')
     }).on('error', () => console.log('file load error!'))
@@ -141,16 +144,18 @@
 
             this.cube.rotation.x += .002
             this.cube.rotation.y += .001
-            tick += .05
+
             lfRenderer.handlePaint()
 //        mesh.lookAt( camera.position );
             //;
-            xPos = camera.position.x * 30
-            yPos = -(camera.position.y) * 30
-            mesh.position.x += .01*Math.sin(tick)
+            // xPos = camera.position.x * 30
+            // yPos = -(camera.position.y) * 30
+
+            tick += 1
+            mesh.position.x += Math.sin(tick * .00005) * .1
 
             //needs a file, aperture, focus, viewpoint
-            lfRenderer.render(loadedLightfield, 1, 1, new LF.Vector2(xPos % 10, yPos % 7))
+            lfRenderer.render(loadedLightfield, 1, 1, new LF.Vector2(xPos , yPos ))
             texture.needsUpdate = true
 
             // variable which is increase by Math.PI every seconds - usefull for animation
