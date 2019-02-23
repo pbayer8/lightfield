@@ -67,7 +67,7 @@
     //     loadedLightfield2 = file2
     // })
 
-    LF.Loader.get('blackhole/head6_17x17')
+    LF.Loader.get('field-chess')
         .on('progress', (value) => {
             //console.log('loading file: ' + value)
         })
@@ -121,7 +121,6 @@
         camera.position.set(0, 0, 0)
         
         scene.add(camera)
-
 
 
         lfTextureLeft = new THREE.Texture(canvasLeft)
@@ -200,6 +199,7 @@
             yPosLeft = Math.min(Math.max((camera.position.y -1.4) * -loadedLightfield.matrixSize.height, -viewPointYBounds), viewPointYBounds)
             yPosRight = Math.min(Math.max((camera.position.y -1.4) * -loadedLightfield.matrixSize.height, -viewPointYBounds), viewPointYBounds)
             
+
 
             //Each renderer needs a file, aperture, focus, viewpoint
             lfRendererLeft.render(loadedLightfield, apertureLeft, 1, new LF.Vector2(xPosLeft, yPosLeft))
