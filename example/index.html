@@ -67,30 +67,29 @@
     //     loadedLightfield2 = file2
     // })
 
-
-
-    LF.Loader.get('field-cards')
+    LF.Loader.get('blackhole/head6_17x17')
         .on('progress', (value) => {
             //console.log('loading file: ' + value)
         })
         .on('complete', (file) => {
 
-
             loadedLightfield = file
 
             canvasLeft = document.createElement('canvas');
-            // canvasLeft.width = nearestPowerOf2(file.frameSize.width);
-            // canvasLeft.height = nearestPowerOf2(file.frameSize.height);
             canvasLeft.width = file.frameSize.width;
             canvasLeft.height = file.frameSize.height;
+             // canvasLeft.width = nearestPowerOf2(file.frameSize.width);
+             // canvasLeft.height = nearestPowerOf2(file.frameSize.height);
+
             canvasLeft.style.display = "none";
             lfRendererLeft = LF.Renderer.init(canvasLeft)
 
             canvasRight = document.createElement('canvas');
-            // canvasRight.width = nearestPowerOf2(file.frameSize.width);
-            // canvasRight.height = nearestPowerOf2(file.frameSize.height);
+
             canvasRight.width = file.frameSize.width;
             canvasRight.height = file.frameSize.height;
+            //             canvasRight.width = nearestPowerOf2(file.frameSize.width);
+            // canvasRight.height = nearestPowerOf2(file.frameSize.height);
             canvasRight.style.display = "none";
             lfRendererRight = LF.Renderer.init(canvasRight)
 
@@ -111,7 +110,8 @@
         document.body.appendChild(WEBVR.createButton(renderer));
         renderer.vr.enabled = true;
 
-        renderer.setClearColor(0X070707)
+        //renderer.setClearColor(0X070707)
+        //renderer.setClearColor(0XFFFFFF)
         renderer.setSize(window.innerWidth, window.innerHeight)
 
         document.getElementById('threeContainer').appendChild(renderer.domElement)
@@ -121,6 +121,7 @@
         camera.position.set(0, 0, 0)
         
         scene.add(camera)
+
 
 
         lfTextureLeft = new THREE.Texture(canvasLeft)
@@ -143,7 +144,8 @@
         scene.add(lightField)
 
         lightField.position.set(0,1.6,-2);
-
+        // var edges = new THREE.EdgesGeometry( lightField );
+        // var line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
 
         var cubeGeometry = new THREE.BoxGeometry( .2,.2,.2);
         var cubeMaterial = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
@@ -171,6 +173,14 @@
         let viewPointYBounds = Math.floor(loadedLightfield.matrixSize.height / 2)
         let stereoDisparity = 4;
 
+
+        var count = 0
+        setInterval(function() {
+            count++
+            xPosRight = count %8
+            yPosRight = (count ) % 8
+        },100)
+
         renderer.setAnimationLoop(function() {
 
             this.cube.rotation.x +=.002
@@ -182,7 +192,8 @@
             lfRendererLeft.handlePaint()
             lfRendererRight.handlePaint()
 
-            //temporary fake (stereo) viewing angle calculator using head position
+
+            // //temporary fake (stereo) viewing angle calculator using head position
             xPosLeft = Math.min(Math.max(camera.position.x * loadedLightfield.matrixSize.width,-viewPointXBounds), viewPointXBounds)
             xPosRight = Math.min(Math.max(camera.position.x * loadedLightfield.matrixSize.width + stereoDisparity, -viewPointXBounds), viewPointXBounds)
 
