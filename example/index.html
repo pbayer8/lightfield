@@ -2,297 +2,41 @@
 <html>
 
 <head>
-    <meta charset="utf-8"/>
-    <title>
-        Lightfield to Three.js Demo
-    </title>
-    <meta content="width=device-width" name="viewport"/>
-    <link href="../build/build.css" rel="stylesheet"/>
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-        }
+    <meta charset="utf-8">
+    <title>A-Frame Slightfield / Lenticular Hello</title>
 
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/101/three.min.js">
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js">
-    </script>
-    <script src="http://threejs.org/examples/js/controls/TrackballControls.js">
-    </script>
-    <script src="http://threejs.org/examples/js/vr/WebVR.js">
-    </script>
+    <meta name="description" content="A-Frame Slightfield / Lenticular Hello">
+
     <script src="../build/build.js">
     </script>
 
+    <script
+        src="https://cdn.jsdelivr.net/gh/aframevr/aframe@d7c21ad7da99473f767e0062c9ca09171f40aa07/dist/aframe-master.min.js"></script>
+        <script
+        src="slightfield-component.js"></script>
+
+        <script src="https://cdn.rawgit.com/donmccurdy/aframe-extras/v4.1.2/dist/aframe-extras.min.js"></script>
+        <script src="https://unpkg.com/super-hands@3.0.0/dist/super-hands.min.js"></script>
 </head>
 
 <body>
 
-<div id="threeContainer">
-</div>
 
-<script type="text/javascript">
-
-    var stats, scene, renderer, camera, cameras, controller, cameraDotLeft, cameraDotRight
-
-    var ipd = .1
-
-    var lightField
-
-    var lfPlaneLeft, lfPlaneRight
-    var lfTextureLeft, lfTexureRight
-    var lfMaterialLeft, lfMaterialRight
-
-    var canvasLeft
-    var canvasRight
-
-    var lfRendererLeft
-    var lfRendererRight
-
-    var xPosLeft = 0
-    var yPosLeft = 0
-
-    var xPosRight = 0
-    var yPosRight = 0
-
-    var loadedLightfield
-
-    var apertureLeft = 0
-    var apertureRight = 0
-
-    var aspectRatio = 0
-
-
-    var cameraPosLeft = new THREE.Vector3()
-    var cameraPosRight = new THREE.Vector3()
-    var lfPlanePos = new THREE.Vector3()
-    var lfRotation = new THREE.Quaternion()
-    var lfXAxis = new THREE.Vector3(1, 0, 0)
-    var lfYAxis = new THREE.Vector3(0, 1, 0)
-    var lfZAxis = new THREE.Vector3(0, 0, 1)
-    // var cameraProjectX = new THREE.Vector3()
-    // var cameraProjectY = new THREE.Vector3()
-    var angleX, angleY
-    var dotXLeft, dotYLeft, dotXRight, dotYRight, meaninglessMult
-
-
-    // var loadedLightfield2;
-    // LF.Loader.get('blackhole/17x5').on('complete', (file2) => {
-    //     loadedLightfield2 = file2
-    // })
-
-    LF.Loader.get('field-crystal')
-    .on('progress', (value) => {
-        //console.log('loading file: ' + value)
-    })
-    .on('complete', (file) => {
-
-        loadedLightfield = file
-
-        canvasLeft = document.createElement('canvas')
-        canvasLeft.width = file.frameSize.width
-        canvasLeft.height = file.frameSize.height
-        // canvasLeft.width = nearestPowerOf2(file.frameSize.width);
-        // canvasLeft.height = nearestPowerOf2(file.frameSize.height);
-
-        canvasLeft.style.display = 'none'
-        lfRendererLeft = LF.Renderer.init(canvasLeft)
-
-        canvasRight = document.createElement('canvas')
-
-        canvasRight.width = file.frameSize.width
-        canvasRight.height = file.frameSize.height
-        //             canvasRight.width = nearestPowerOf2(file.frameSize.width);
-        // canvasRight.height = nearestPowerOf2(file.frameSize.height);
-        canvasRight.style.display = 'none'
-        lfRendererRight = LF.Renderer.init(canvasRight)
-
-        aspectRatio = file.frameSize.width / file.frameSize.height
-
-        init()
-
-    }).on('error', () => console.log('file load error!'))
-
-
-    function init() {
-
-        renderer = new THREE.WebGLRenderer({
-            antialias: true // to get smoother output
-        })
-
-        document.body.appendChild(WEBVR.createButton(renderer))
-        renderer.vr.enabled = true
-
-        //renderer.setClearColor(0X070707)
-        //renderer.setClearColor(0XFFFFFF)
-        renderer.setSize(window.innerWidth, window.innerHeight)
-
-        document.getElementById('threeContainer').appendChild(renderer.domElement)
-
-        scene = new THREE.Scene()
-        camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, .01, 10000)
-        camera.position.set(0, 0, 0)
-
-        scene.add(camera)
-
-
-        lfTextureLeft = new THREE.Texture(canvasLeft)
-        lfTextureLeft.needsUpdate = true
-        lfMaterialLeft = new THREE.MeshBasicMaterial({
-            map: lfTextureLeft
-        })
-        lfPlaneLeft = new THREE.Mesh(new THREE.PlaneGeometry(aspectRatio, 1, 1, 1), lfMaterialLeft)
-
-        lfTextureRight = new THREE.Texture(canvasRight)
-        lfTextureRight.needsUpdate = true
-        lfMaterialRight = new THREE.MeshBasicMaterial({
-            map: lfTextureRight
-        })
-        lfPlaneRight = new THREE.Mesh(new THREE.PlaneGeometry(aspectRatio, 1, 1, 1), lfMaterialRight)
-
-        lightField = new THREE.Group()
-        lightField.add(lfPlaneLeft)
-        lightField.add(lfPlaneRight)
-        // scene.add(lightField)
-        // controller.add(lightField)
-
-        // lightField.position.set(0, 1.6, -1)
-        // lightField.rotation.set( 0, 0, 1.57, 'XYZ' );
-        lightField.position.set(0, 0, 0)
-        // var edges = new THREE.EdgesGeometry( lightField );
-        // var line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
-        var material = new THREE.MeshBasicMaterial({color: 0xffff00})
-        cameraDotLeft = new THREE.Mesh(new THREE.SphereGeometry(.1, 3, 2), material)
-        cameraDotRight = new THREE.Mesh(new THREE.SphereGeometry(.1, 3, 2), material)
-        cameraDotLeft.position.set(-ipd, 0, 0)
-        cameraDotRight.position.set(ipd, 0, 0)
-        cameraDotLeft.visible = false
-        cameraDotRight.visible = false
-        camera.add(cameraDotLeft)
-        camera.add(cameraDotRight)
-
-
-        var tick
-
-
-        window.addEventListener('vrdisplaypresentchange', function (event) {
-            if (event.display.isPresenting) {
-                // cameras = renderer.vr.getCamera(camera).cameras
-                lfPlaneLeft.layers.set(1)
-                lfPlaneRight.layers.set(2)
-                controller = renderer.vr.getController(0)
-                scene.add(controller)
-                controller.add(lightField)
-            } else {
-                console.log('Display has stopped presenting.')
-            }
-        })
-
-
-        //Calculate render's viewpoint range via lightfield data's matrix size
-        let viewPointXBounds = Math.floor(loadedLightfield.matrixSize.width / 2)
-        let viewPointYBounds = Math.floor(loadedLightfield.matrixSize.height / 2)
-        let stereoDisparity = 4
-
-
-        var count = 0
-        // setInterval(function () {
-        //     count++
-        //     xPosRight = count % 8
-        //     yPosRight = (count) % 8
-        // }, 100)
-
-        meaninglessMult = 3
-
-        setInterval(printVars, 1000)
-
-        renderer.setAnimationLoop(function () {
-
-            // this.cube.rotation.x += .002
-            // this.cube.rotation.y += .001
-
-            tick += 1
-            //mesh.position.x += Math.sin(tick * .00005) * .1
-
-            lfRendererLeft.handlePaint()
-            lfRendererRight.handlePaint()
-
-
-            // cameraPosLeft.setFromMatrixPosition(camera.matrixWorld)
-            cameraDotLeft.getWorldPosition(cameraPosLeft)
-            cameraDotRight.getWorldPosition(cameraPosRight)
-            // lfPlanePos.setFromMatrixPosition(lightField.matrixWorld)            camera.getWorldPosition(cameraPosLeft)
-            lightField.getWorldPosition(lfPlanePos)
-            cameraPosLeft.sub(lfPlanePos)
-            cameraPosRight.sub(lfPlanePos)
-            lightField.getWorldQuaternion(lfRotation)
-
-            //Option 1
-            lfXAxis.set(1, 0, 0)
-            lfYAxis.set(0, 1, 0)
-            lfZAxis.set(0, 0, 1)
-            lfXAxis.applyQuaternion(lfRotation)
-            lfYAxis.applyQuaternion(lfRotation)
-            lfZAxis.applyQuaternion(lfRotation)
-            //Option 2
-            // cameraPosLeft.applyQuaternion(lfRotation)
-            // cameraPosRight.applyQuaternion(lfRotation)
-
-            // cameraProjectX.copy(cameraPosLeft)
-            // cameraProjectY.copy(cameraPosLeft)
-            // cameraProjectX.projectOnPlane(lfXAxis)
-            // cameraProjectY.projectOnPlane(lfYAxis)
-            cameraPosLeft.normalize()
-            cameraPosRight.normalize()
-            dotYLeft = cameraPosLeft.dot(lfYAxis)
-            dotXLeft = cameraPosLeft.dot(lfXAxis)
-            dotYRight = cameraPosRight.dot(lfYAxis)
-            dotXRight = cameraPosRight.dot(lfXAxis)
-            // angleY = lfZAxis.angleTo(cameraProjectX)
-            // angleX = lfZAxis.angleTo(cameraProjectY)
-
-            // console.log(angleX, angleY)
-
-            // //temporary fake (stereo) viewing angle calculator using head position
-            xPosLeft = Math.min(Math.max(meaninglessMult * dotXLeft * loadedLightfield.matrixSize.width, -viewPointXBounds), viewPointXBounds)
-            xPosRight = Math.min(Math.max(meaninglessMult * dotXRight * loadedLightfield.matrixSize.width, -viewPointXBounds), viewPointXBounds)
-
-            yPosLeft = Math.min(Math.max(meaninglessMult * dotYLeft * -loadedLightfield.matrixSize.height, -viewPointYBounds), viewPointYBounds)
-            yPosRight = Math.min(Math.max(meaninglessMult * dotYRight * -loadedLightfield.matrixSize.height, -viewPointYBounds), viewPointYBounds)
-
-
-            //Each renderer needs a file, aperture, focus, viewpoint
-            lfRendererLeft.render(loadedLightfield, apertureLeft, 1, new LF.Vector2(xPosLeft, yPosLeft))
-            lfRendererRight.render(loadedLightfield, apertureRight, 1, new LF.Vector2(xPosRight, yPosRight))
-
-            lfTextureLeft.needsUpdate = true
-            lfTextureRight.needsUpdate = true
-
-            // actually render the scene
-            renderer.render(scene, camera)
-
-        })
-
-
-    }
-
-    function printVars() {
-        console.log('\ncameraPos\n', cameraPosLeft,
-            '\nlfPlanePos\n', lfPlanePos,
-            '\nlfRotation\n', lfRotation,
-            '\nlfAxes\n', lfXAxis, lfYAxis, lfZAxis,
-            '\ndotProducts\n', dotYLeft, dotXLeft,
-            '\nx/yPos\n', xPosLeft, yPosLeft)
-    }
-
-    function nearestPowerOf2(n) {
-        return 1 << 31 - Math.clz32(n)
-    }
-
-
-</script>
+    <a-scene background="color: #FAFAFA">
+
+            <a-entity sphere-collider="objects: a-box" super-hands hand-controls="left"></a-entity>
+            <a-entity sphere-collider="objects: a-box" super-hands hand-controls="right"></a-entity>
+            
+
+<a-box hoverable grabbable stretchable draggable dropppable>
+        <a-entity slightfield position="0 1 -1" scale="1.5 1.5 1.5"></a-entity>
+    </a-box>
+        
+        <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow></a-box>
+        <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow></a-sphere>
+        <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow></a-cylinder>
+        <a-plane  position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow></a-plane>
+    </a-scene>
 </body>
 
 </html>
