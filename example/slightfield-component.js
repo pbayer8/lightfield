@@ -1,15 +1,19 @@
 
 AFRAME.registerComponent('slightfield', {
+
   init: function () {
 
-    console.log(this.el.object3D)
     this.slightfield = new Slightfield(this.el.object3D)
+
+    const cameraEl = document.querySelector('[camera]')
     
-    console.log("laoding!")
+    cameraEl.addEventListener('loaded', () => {
+      const camera = cameraEl.components.camera.camera;
+      this.slightfield.setThreeCamera(camera)
+      this.slightfield.loadDataSet("field-crystal")
 
-
-    this.slightfield.loadDataSet("field-crystal")
-    console.log("hi!")
+    })
+    
 
   }, tick: function() {
       this.slightfield.render()
@@ -21,22 +25,7 @@ class Slightfield {
   constructor(object3DToAttachTo) {
     this.object3DToAttachTo = object3DToAttachTo
 
-    var stats, scene, renderer, camera, cameras, controller, cameraDotLeft, cameraDotRight
-
-
     this.ipd = .1
-
-    var lightField
-
-    var lfPlaneLeft, lfPlaneRight
-    var lfTextureLeft, lfTexureRight
-    var lfMaterialLeft, lfMaterialRight
-
-    var canvasLeft
-    var canvasRight
-
-    var lfRendererLeft
-    var lfRendererRight
 
     this.xPosLeft = 0
     this.yPosLeft = 0
@@ -44,13 +33,10 @@ class Slightfield {
     this.xPosRight = 0
     this.yPosRight = 0
 
-    var loadedLightfield
-
     this.apertureLeft = 0
     this.apertureRight = 0
 
     this.aspectRatio = 0
-
 
     this.cameraPosLeft = new THREE.Vector3()
     this.cameraPosRight = new THREE.Vector3()
@@ -59,14 +45,6 @@ class Slightfield {
     this.lfXAxis = new THREE.Vector3(1, 0, 0)
     this.lfYAxis = new THREE.Vector3(0, 1, 0)
     this.lfZAxis = new THREE.Vector3(0, 0, 1)
-    // var cameraProjectX = new THREE.Vector3()
-    // var cameraProjectY = new THREE.Vector3()
-    
-    var angleX, angleY
-    var dotXLeft, dotYLeft, dotXRight, dotYRight, meaninglessMult
-
-    // loadDataSet('field-crystal')
-
   }
 
   loadDataSet(setName) {
@@ -77,24 +55,21 @@ class Slightfield {
       })
       .on('complete', (file) => {
 
-
-
         this.loadedLightfield = file
 
         this.canvasLeft = document.createElement('canvas')
-        this.canvasLeft.width = file.frameSize.width
-        this.canvasLeft.height = file.frameSize.height
-        // this.canvasLeft.width = nearestPowerOf2(file.frameSize.width);
-        // this.canvasLeft.height = nearestPowerOf2(file.frameSize.height);
+        // this.canvasLeft.width = file.frameSize.width
+        // this.canvasLeft.height = file.frameSize.height
+        this.canvasLeft.width = this.nearestPowerOf2(file.frameSize.width);
+        this.canvasLeft.height = this.nearestPowerOf2(file.frameSize.height);
         this.canvasLeft.style.display = 'none'
         this.lfRendererLeft = LF.Renderer.init(this.canvasLeft)
 
-
         this.canvasRight = document.createElement('canvas')
-        this.canvasRight.width = file.frameSize.width
-        this.canvasRight.height = file.frameSize.height
-        //this.canvasRight.width = nearestPowerOf2(file.frameSize.width);
-        //canvasRight.height = nearestPowerOf2(file.frameSize.height);
+        // this.canvasRight.width = file.frameSize.width
+        // this.canvasRight.height = file.frameSize.height
+        this.canvasRight.width = this.nearestPowerOf2(file.frameSize.width);
+        this.canvasRight.height = this.nearestPowerOf2(file.frameSize.height);
         this.canvasRight.style.display = 'none'
         this.lfRendererRight = LF.Renderer.init(this.canvasRight)
 
@@ -107,27 +82,11 @@ class Slightfield {
 
   }
 
+  setThreeCamera(camera) {
+    this.camera = camera;
+  }
+  
   init() {
-
-    // this.renderer = new THREE.WebGLRenderer({
-    //   antialias: true // to get smoother output
-    // })
-
-    // document.body.appendChild(WEBVR.createButton(renderer))
-    // renderer.vr.enabled = true
-
-
-
-
-    // scene = new THREE.Scene()
-    // camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, .01, 10000)
-    // camera.position.set(0, 0, 0)
-
-    // scene.add(camera)
-    // var sceneEl = document.querySelector('a-scene');
-
-    let camera = document.querySelector('[camera]').components.camera.camera;
-
 
     this.lfTextureLeft = new THREE.Texture(this.canvasLeft)
     this.lfTextureLeft.needsUpdate = true
@@ -149,34 +108,24 @@ class Slightfield {
 
 
     this.object3DToAttachTo.add(this.lightField)
-    // scene.add(lightField)
-    // controller.add(lightField)
 
-    // lightField.position.set(0, 1.6, -1)
-    // lightField.rotation.set( 0, 0, 1.57, 'XYZ' );
-    this.lightField.position.set(0, 0, 0)
-    // var edges = new THREE.EdgesGeometry( lightField );
-    // var line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
+    //make fake eyes... 
     let material = new THREE.MeshBasicMaterial({ color: 0xffff00 })
+
     this.cameraDotLeft = new THREE.Mesh(new THREE.SphereGeometry(.1, 3, 2), material)
     this.cameraDotRight = new THREE.Mesh(new THREE.SphereGeometry(.1, 3, 2), material)
     this.cameraDotLeft.position.set(-this.ipd, 0, 0)
     this.cameraDotRight.position.set(this.ipd, 0, 0)
     this.cameraDotLeft.visible = false
     this.cameraDotRight.visible = false
-    camera.add(this.cameraDotLeft)
-    camera.add(this.cameraDotRight)
-
+    this.camera.add(this.cameraDotLeft)
+    this.camera.add(this.cameraDotRight)
 
 
     window.addEventListener('vrdisplaypresentchange', function (event) {
       if (event.display.isPresenting) {
-        // cameras = renderer.vr.getCamera(camera).cameras
         this.lfPlaneLeft.layers.set(1)
         this.lfPlaneRight.layers.set(2)
-        // controller = renderer.vr.getController(0)
-        // scene.add(controller)
-        // controller.add(lightField)
       } else {
         console.log('Display has stopped presenting.')
       }
@@ -219,24 +168,13 @@ class Slightfield {
       this.lfXAxis.applyQuaternion(this.lfRotation)
       this.lfYAxis.applyQuaternion(this.lfRotation)
       this.lfZAxis.applyQuaternion(this.lfRotation)
-      //Option 2
-      // cameraPosLeft.applyQuaternion(lfRotation)
-      // cameraPosRight.applyQuaternion(lfRotation)
 
-      // cameraProjectX.copy(cameraPosLeft)
-      // cameraProjectY.copy(cameraPosLeft)
-      // cameraProjectX.projectOnPlane(lfXAxis)
-      // cameraProjectY.projectOnPlane(lfYAxis)
       this.cameraPosLeft.normalize()
       this.cameraPosRight.normalize()
       this.dotYLeft = this.cameraPosLeft.dot(this.lfYAxis)
       this.dotXLeft = this.cameraPosLeft.dot(this.lfXAxis)
       this.dotYRight = this.cameraPosRight.dot(this.lfYAxis)
       this.dotXRight = this.cameraPosRight.dot(this.lfXAxis)
-      // angleY = lfZAxis.angleTo(cameraProjectX)
-      // angleX = lfZAxis.angleTo(cameraProjectY)
-
-      // console.log(angleX, angleY)
 
       // //temporary fake (stereo) viewing angle calculator using head position
       this.xPosLeft = Math.min(Math.max(this.meaninglessMult * this.dotXLeft * this.loadedLightfield.matrixSize.width, -this.viewPointXBounds), this.viewPointXBounds)
@@ -247,7 +185,6 @@ class Slightfield {
       
       this.yPosRight = Math.min(Math.max(this.meaninglessMult * this.dotYRight * -this.loadedLightfield.matrixSize.height, -this.viewPointYBounds), this.viewPointYBounds)
 
-
       //Each renderer needs a file, aperture, focus, viewpoint
       this.lfRendererLeft.render(this.loadedLightfield, this.apertureLeft, 1, new LF.Vector2(this.xPosLeft, this.yPosLeft))
       this.lfRendererRight.render(this.loadedLightfield, this.apertureRight, 1, new LF.Vector2(this.xPosRight, this.yPosRight))
@@ -255,8 +192,6 @@ class Slightfield {
       this.lfTextureLeft.needsUpdate = true
       this.lfTextureRight.needsUpdate = true
 
-      // actually render the scene
-      // renderer.render(scene, camera)
       }
   }
 
